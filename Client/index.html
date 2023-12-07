@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        li:hover{
+            background-color: aquamarine;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+</head>
+<body>
+    <h1>Node JS Deneme Web Sayfası</h1>
+
+    <input>
+    <button onclick="save()">Save</button>
+
+    <ul></ul>
+    
+    <script>
+        getAll();
+
+        //Read
+        async function getAll(){
+            const data = 
+                await fetch("https://localhost:7183/api/values/getAll")
+                .then(res=> res.json());
+
+            const ulEl = document.querySelector("ul");
+            let text = "";
+
+            for(let i in data){
+                text += `
+                    <li>
+                        <input value="${data[i].work}" id="input-${i}"> 
+                        <button onclick="update(event)" data-id="${data[i]._id}" data-index="${i}">Update</button> 
+                        <button onclick="removeById(event)" data-id="${data[i]._id}">Remove</button>                      
+                    </li>`
+            }
+
+            ulEl.innerHTML = text;
+        }
+
+        //Create
+        const save = async () => {
+           const inputEl = document.querySelector("input");
+           const data = {value: inputEl.value};
+           
+           await fetch("https://localhost:7183/api/values/save", {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {"Content-Type": "application/json"}
+           })
+
+           getAll();
+           inputEl.value = "";
+        }        
+    
+        //update
+        const update = async (event)=> {
+            const id = event.target.dataset["id"];
+            const index = event.target.dataset["index"];
+            const value = document.getElementById("input-" + index).value;
+            
+            const data = {
+                _id: id,
+                value: value
+            };
+
+            await fetch("https://localhost:7183/api/values/update", {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: {"Content-Type": "application/json"}
+            })
+
+            toastr.info("Update is successful");
+
+            getAll();
+        }
+
+        //Remove
+        async function removeById(event){
+            const id = event.target.dataset["id"];
+
+            await fetch(`https://localhost:7183/api/values/removeById`,{
+                headers: {"Content-Type": "application/json"},
+                method: "POST",
+                body: JSON.stringify({_id: id})
+            })
+
+            getAll();
+        }
+    </script>
+</body>
+</html>
